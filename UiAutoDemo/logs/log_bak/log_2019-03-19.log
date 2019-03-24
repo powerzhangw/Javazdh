@@ -1,0 +1,6 @@
+2019-03-19 at 17:56:24 CST INFO  com.ui.auto.publicM.BrowerDriver 24 openDriver - 打开浏览器
+2019-03-19 at 17:56:29 CST INFO  com.ui.auto.publicM.BrowerDriver 29 openDriver - 使浏览器最大化
+2019-03-19 at 17:56:29 CST INFO  com.ui.auto.step.BaiDuStep 29 BaiDuStep - 【=====================开始搜索==================】
+2019-03-19 at 17:56:32 CST INFO  com.ui.auto.step.BaiDuStep 35 BaiDuStep - 【=====================搜索结束==================】
+
+2019-03-19 at 17:56:34 CST INFO  com.ui.auto.publicM.BrowerDriver 35 closeBrower - 操作结束，关闭浏览器

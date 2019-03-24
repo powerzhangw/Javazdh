@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- UTF-8 -->
+<!-- 定义了一个名称为selenium的项目元素(总项目名-任意)，缺省的任务为"core"任务，根目录为当前目录 -->
+<project name="myproject" default="init" basedir=".">
+    <!-- 定义 目录 路径 -->
+    <property name="test.dir" value="test"/>
+    <!-- 定义组件的名称 -->
+    <property name="bin.dir" value="bin"/>
+    <!-- 定义编译目录路径 -->
+    <property name="img.dir" value="img"/>
+    <!-- 定义截图路径 -->
+    <property name="src.dir" value="src"/>
+    <!-- 定义源代码目录路径 -->
+    <property name="lib.dir" value="${basedir}/lib"/>
+    <!-- 定义库目录路径 -->
+    <!--<property name="lib.dir" value="lib" />-->
+    <property name="log.dir" value="${basedir}/src/log4j2.xml"/>
+    <!--日志xml路径-->
+    <property name="mail_to" value="123545@qq.com"/>
+    <!--收件人组[]-->
+
+    <!--当前时间 -->
+    <tstamp>
+        <format property="TODAY_UK" pattern="MM-dd-HH" locale="en"/>
+    </tstamp>
+    <target name="DATE">
+        <echo message="${TODAY_UK}"/>
+    </target>
+
+    <!-- 运行前，先删除bin文件夹 -->
+    <target name="clean">
+        <delete dir="${bin.dir}"/>
+    </target>
+    <!-- 编译src目录，并生成编译目录bin -->
+    <target name="compile" depends="clean">
+        <mkdir dir="${bin.dir}"/>
+        <javac srcdir="${src.dir}" encoding="UTF-8" destdir="${bin.dir}" classpathref="test.classpath"
+               includeantruntime="off" debug="on" debuglevel="lines,vars,source"/>
+        <!-- 编译后，将log配置文件放到bin下 -->
+        <copy todir="${bin.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**/*.properties"/>
+                <include name="**/*.xml"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <path id="test.classpath">
+        <pathelement location="${bin.dir}"/>
+        <pathelement location="."/>
+        <fileset dir="${lib.dir}" includes="*.jar"/>
+        <!-- 对文件的分组 -->
+    </path>
+    <!--run testng ant task-->
+    <taskdef name="testng" classname="com.beust.testng.TestNGAntTask" classpath="${lib.dir}/testng-6.9.6.jar"/>
+  <!--  <taskdef name="testng" classname="org.testng.TestNGAntTask">
+        <classpath>
+            <pathelement location="${lib.dir}/testng-6.9.4.jar"/>
+        </classpath>
+    </taskdef>-->
+
+    <!--设定运行的任务-->
+    <target name="init" description="start selenium server, run test and send mail"
+            depends="compile">
+        <parallel>
+            <sequential>
+                <antcall target="run_tests">
+                </antcall>
+                <antcall target="zip-report">
+                </antcall>
+                <!--<antcall target="send_mail">
+                </antcall>-->
+            </sequential>
+        </parallel>
+    </target>
+
+    <target name="run_tests">
+        <testng classpathref="test.classpath" outputDir="test-output">
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+        <fail message="ERROR: Test Failed!!!!!!!!!" if="test.failed"/>
+    </target>
+
+    <target name="transform">
+        <echo>"生成测试报告"</echo>
+        <xslt in="${basedir}/test-output/testng-results.xml" style="${basedir}/test-output/testng-results.xsl"
+              out="${basedir}/test-output/index/index.html">
+            <param name="testNgXslt.outputDir" expression="${basedir}/test-output/index"/>
+            <param name="testNgXslt.showRuntimeTotals" expression="true"/>
+            <classpath refid="test.classpath"/>
+        </xslt>
+    </target>
+    <target name="zip-report" depends="transform">
+        <echo>"将测试报告打包.zip"</echo>
+        <delete dir="${basedir}/test-output/report"/>
+        <mkdir dir="${basedir}/test-output/report"/>
+        <zip destfile="${basedir}/test-output/report/TestAutoReport.zip" basedir="${basedir}/test-output/index/"/>
+    </target>
+
+    <!--//邮件发送-->
+    <target name="send_mail" depends="transform">
+        <!---  163公共端口：ssl-465/994,非ssl-25; subject:邮件主题;tolist:收件人组；message：邮件内容-->
+        <mail mailhost="smtp.163.com" subject="邮箱接口邮件" mailport="25" messagemimetype="text/html"
+              from="发送方" user="QA" password="123456a"  tolist="" message="邮件内容">
+            <fileset dir="${basedir}/test-output/report">
+                <include name="TestAutoReport.zip"/>
+            </fileset>
+            <fileset dir="logs">
+                <include name="lcs.log"/>
+            </fileset>
+            <fileset dir="img">
+                <include name="*${TODAY_UK}.png"/>
+            </fileset>
+        </mail>
+        <echo>"邮件发送成功！"</echo>
+    </target>
+
+</project>
